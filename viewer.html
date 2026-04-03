@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BOQ Floor Plan Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .input-section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            color: #555;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-generate {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-generate:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-clear {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-clear:hover {
+            background: #e0e0e0;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .image-section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+
+        .image-container {
+            width: 100%;
+            height: 500px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .loading {
+            color: #667eea;
+            font-size: 1.1em;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .spinner {
+            border: 4px solid #f0f0f0;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #ff6b6b;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .success {
+            background: #51cf66;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .details-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .details-card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+
+        .boq-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.95em;
+        }
+
+        .boq-item:last-child {
+            border-bottom: none;
+        }
+
+        .boq-item strong {
+            color: #333;
+        }
+
+        .boq-item span {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .cost-summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .cost-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .cost-item:last-child {
+            margin-bottom: 0;
+            border-top: 2px solid rgba(255, 255, 255, 0.3);
+            padding-top: 10px;
+            font-size: 1.1em;
+            font-weight: 700;
+        }
+
+        .metadata {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        .metadata-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .details-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .placeholder {
+            color: #999;
+            text-align: center;
+            font-size: 1.1em;
+        }
+
+        .download-btn {
+            background: #51cf66;
+            color: white;
+            margin-top: 10px;
+        }
+
+        .download-btn:hover {
+            background: #40c057;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏗️ BOQ Floor Plan Viewer</h1>
+            <p>Generate architectural floor plans and calculate construction costs</p>
+        </header>
+
+        <div class="main-content">
+            <div class="card input-section">
+                <h2>Building Details</h2>
+                
+                <div class="form-group">
+                    <label for="query">Building Description</label>
+                    <input 
+                        type="text" 
+                        id="query" 
+                        placeholder="e.g., 3 bedroom 2 floor modern house with 1500 sqft"
+                        value="3 bedroom 2 floor modern house with 1500 sqft"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="quality">Quality Tier</label>
+                    <select id="quality">
+                        <option value="">Auto-detect from query</option>
+                        <option value="budget">Budget</option>
+                        <option value="standard">Standard</option>
+                        <option value="premium">Premium/Luxury</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="location">Location Tier</label>
+                    <select id="location">
+                        <option value="">Auto-detect (Default: Tier 2)</option>
+                        <option value="metro">Metro</option>
+                        <option value="tier1">Tier 1 City</option>
+                        <option value="tier2">Tier 2 City</option>
+                        <option value="tier3">Tier 3 City</option>
+                        <option value="rural">Rural</option>
+                    </select>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn-generate" id="generateBtn" onclick="generateFloorPlan()">
+                        Generate Floor Plan & BOQ
+                    </button>
+                    <button class="btn-clear" onclick="clearResults()">Clear</button>
+                </div>
+
+                <div id="message"></div>
+            </div>
+
+            <div class="card image-section">
+                <h2>Floor Plan</h2>
+                <div class="image-container" id="imageContainer">
+                    <p class="placeholder">Floor plan will appear here</p>
+                </div>
+                <button class="btn-generate download-btn" id="downloadBtn" onclick="downloadImage()" style="display:none;">
+                    ⬇️ Download Floor Plan
+                </button>
+            </div>
+        </div>
+
+        <div class="details-grid" id="detailsGrid" style="display:none;">
+            <div class="details-card">
+                <h3>📋 Bill of Quantities (BOQ)</h3>
+                <div id="boqDetails"></div>
+                <div class="metadata">
+                    <div class="metadata-item">
+                        <span>Parser Used:</span>
+                        <strong id="parserType">-</strong>
+                    </div>
+                    <div class="metadata-item">
+                        <span>Quality Detected:</span>
+                        <strong id="qualityDetected">-</strong>
+                    </div>
+                    <div class="metadata-item">
+                        <span>Location Tier:</span>
+                        <strong id="locationDetected">-</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="details-card">
+                <h3>💰 Cost Breakdown</h3>
+                <div id="costDetails"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000';
+        let currentImageBase64 = null;
+
+        async function generateFloorPlan() {
+            const query = document.getElementById('query').value.trim();
+            
+            if (!query) {
+                showMessage('Please enter a building description', 'error');
+                return;
+            }
+
+            const messageEl = document.getElementById('message');
+            const generateBtn = document.getElementById('generateBtn');
+            const imageContainer = document.getElementById('imageContainer');
+
+            // Disable button and show loading
+            generateBtn.disabled = true;
+            messageEl.innerHTML = '';
+            imageContainer.innerHTML = '<div class="loading"><div class="spinner"></div><p>Generating floor plan...</p></div>';
+
+            try {
+                const response = await fetch(`${API_URL}/predict`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ query })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API Error: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to generate floor plan');
+                }
+
+                // Display the floor plan image
+                if (data.floor_plan) {
+                    currentImageBase64 = data.floor_plan;
+                    imageContainer.innerHTML = `<img src="${data.floor_plan}" alt="Floor Plan">`;
+                    document.getElementById('downloadBtn').style.display = 'block';
+                } else {
+                    imageContainer.innerHTML = '<p class="placeholder">⚠️ No floor plan generated</p>';
+                }
+
+                // Display BOQ and cost details
+                displayDetails(data);
+                showMessage('✅ Floor plan generated successfully!', 'success');
+
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage(`❌ Error: ${error.message}`, 'error');
+                imageContainer.innerHTML = '<p class="placeholder">❌ Failed to generate floor plan</p>';
+            } finally {
+                generateBtn.disabled = false;
+            }
+        }
+
+        function displayDetails(data) {
+            const detailsGrid = document.getElementById('detailsGrid');
+            const boqDetails = document.getElementById('boqDetails');
+            const costDetails = document.getElementById('costDetails');
+
+            // Display BOQ
+            let boqHTML = '';
+            if (data.boq) {
+                for (const [item, quantity] of Object.entries(data.boq)) {
+                    const displayName = item.replace(/_/g, ' ').toUpperCase();
+                    boqHTML += `
+                        <div class="boq-item">
+                            <strong>${displayName}</strong>
+                            <span>${parseFloat(quantity).toFixed(2)} ${getUnit(item)}</span>
+                        </div>
+                    `;
+                }
+            }
+            boqDetails.innerHTML = boqHTML;
+
+            // Display Cost
+            let costHTML = '<div class="cost-summary">';
+            if (data.cost) {
+                costHTML += `
+                    <div class="cost-item">
+                        <span>Material Cost:</span>
+                        <span>₹${formatNumber(data.cost.material_cost)}</span>
+                    </div>
+                    <div class="cost-item">
+                        <span>Labor Cost:</span>
+                        <span>₹${formatNumber(data.cost.labor_cost)}</span>
+                    </div>
+                    <div class="cost-item">
+                        <span>TOTAL COST:</span>
+                        <span>₹${formatNumber(data.cost.total_cost)}</span>
+                    </div>
+                `;
+                
+                if (data.cost.cost_per_sqft) {
+                    costHTML += `
+                        <div style="margin-top: 10px; font-size: 0.9em; opacity: 0.9;">
+                            <div>Per Sq.Ft: ₹${formatNumber(data.cost.cost_per_sqft)}</div>
+                        </div>
+                    `;
+                }
+            }
+            costHTML += '</div>';
+            costDetails.innerHTML = costHTML;
+
+            // Display metadata
+            if (data.metadata) {
+                document.getElementById('parserType').textContent = data.metadata.parser || '-';
+                document.getElementById('qualityDetected').textContent = (data.metadata.quality || '-').toUpperCase();
+                document.getElementById('locationDetected').textContent = (data.metadata.location || '-').toUpperCase();
+            }
+
+            detailsGrid.style.display = 'grid';
+        }
+
+        function getUnit(item) {
+            const item_lower = item.toLowerCase();
+            if (item_lower.includes('labor') || item_lower.includes('cost')) return '';
+            if (item_lower.includes('paint') || item_lower.includes('putty')) return 'ltrs';
+            if (item_lower.includes('wiring') || item_lower.includes('pipe')) return 'meters';
+            return 'units';
+        }
+
+        function formatNumber(num) {
+            return Math.round(num).toLocaleString('en-IN');
+        }
+
+        function showMessage(msg, type) {
+            const messageEl = document.getElementById('message');
+            messageEl.innerHTML = `<div class="${type}">${msg}</div>`;
+        }
+
+        function clearResults() {
+            document.getElementById('query').value = '';
+            document.getElementById('quality').value = '';
+            document.getElementById('location').value = '';
+            document.getElementById('imageContainer').innerHTML = '<p class="placeholder">Floor plan will appear here</p>';
+            document.getElementById('detailsGrid').style.display = 'none';
+            document.getElementById('message').innerHTML = '';
+            document.getElementById('downloadBtn').style.display = 'none';
+            currentImageBase64 = null;
+        }
+
+        function downloadImage() {
+            if (!currentImageBase64) return;
+
+            const link = document.createElement('a');
+            link.href = currentImageBase64;
+            link.download = `floor-plan-${new Date().getTime()}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Generate on Enter key
+        document.getElementById('query').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                generateFloorPlan();
+            }
+        });
+
+        // Load default on page load
+        window.addEventListener('load', () => {
+            // Optional: Auto-generate on page load
+            // generateFloorPlan();
+        });
+    </script>
+</body>
+</html>
