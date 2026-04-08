@@ -45,6 +45,7 @@ class APIClient {
         query: request.query,
         quality: quality,
         location: location,
+        use_nlp: true,  // Enable NLP parser to test new model
       })
 
       if (!response.data.success) {

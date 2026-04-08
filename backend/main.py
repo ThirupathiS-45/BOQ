@@ -146,10 +146,12 @@ class AppState:
             cls.model = bundle.get("model")
             cls.model_features = bundle.get("features", [])
             cls.model_targets = bundle.get("targets", [])
+            cls.target_scalers = bundle.get("target_scalers", {})  # Load scalers
             
             logger.info(f"✅ Model loaded successfully")
             logger.info(f"   Features: {len(cls.model_features)}")
             logger.info(f"   Targets: {len(cls.model_targets)}")
+            logger.info(f"   Scalers: {len(cls.target_scalers)}")
             
         except Exception as e:
             logger.error(f"Failed to load model: {str(e)}")
@@ -215,15 +217,33 @@ def predict_boq(input_data: Dict[str, Any]) -> tuple[bool, Dict[str, float], Opt
         Tuple of (success, boq_dict, error_message)
     """
     try:
+        import numpy as np
+        
         # Prepare features for model
         df = FeatureEngineer.prepare_for_model(input_data, AppState.model_features)
         
         logger.info(f"Input features for model: {df.to_dict('records')[0]}")
         
-        # Make prediction
+        # Make prediction (in scaled space)
         prediction = AppState.model.predict(df)[0]
         
-        logger.info(f"Raw model predictions: {prediction}")
+        logger.info(f"Raw model predictions (scaled): {prediction}")
+        
+        # Inverse scale predictions using saved scalers
+        if AppState.target_scalers:
+            prediction_unscaled = []
+            for i, target in enumerate(AppState.model_targets):
+                if target in AppState.target_scalers:
+                    scaler = AppState.target_scalers[target]
+                    # Clip scaled prediction to [0, 1]
+                    scaled_val = np.clip(prediction[i], 0, 1)
+                    # Inverse transform
+                    unscaled = scaler.inverse_transform([[scaled_val]])[0][0]
+                    prediction_unscaled.append(max(0, unscaled))  # Ensure non-negative
+                else:
+                    prediction_unscaled.append(max(0, prediction[i]))
+            prediction = np.array(prediction_unscaled)
+            logger.info(f"Model predictions (unscaled): {prediction}")
         
         # Create BOQ dictionary
         boq = dict(zip(AppState.model_targets, prediction))
