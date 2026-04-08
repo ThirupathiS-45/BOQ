@@ -2,10 +2,25 @@ export interface FloorPlanRequest {
   query: string
   quality?: number  // 0=budget, 1=standard, 2=premium
   location?: string // tier1, tier2, tier3, metro
+  contractor_margin?: boolean // Include contractor margin
 }
 
 export interface BOQItem {
   [key: string]: number | string
+}
+
+export interface MaterialBreakdown {
+  quantity: number
+  unit: string
+  rate: number
+  cost: number
+}
+
+export interface HiddenCosts {
+  gst: number
+  contingency: number
+  contractor_margin: number
+  subtotal: number
 }
 
 export interface CostBreakdown {
@@ -13,6 +28,18 @@ export interface CostBreakdown {
   labor_cost: number
   total_cost: number
   cost_per_sqft: number
+  hidden_costs?: HiddenCosts
+  breakdown?: {
+    materials?: {
+      [key: string]: MaterialBreakdown
+    }
+    labor?: {
+      rate_per_sqft: number
+      area_sqft: number
+      multiplier: number
+      total: number
+    }
+  }
 }
 
 export interface Metadata {

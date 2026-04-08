@@ -1,16 +1,23 @@
 import React from 'react'
 import { Package } from 'lucide-react'
-import type { BOQItem } from '@/types'
+import type { BOQItem, CostBreakdown } from '@/types'
 
 interface BOQTableProps {
   data: BOQItem
+  cost?: CostBreakdown
 }
 
-export const BOQTable: React.FC<BOQTableProps> = ({ data }): JSX.Element => {
-  const items = Object.entries(data).map(([key, value]) => ({
-    item: key,
-    quantity: value,
-  }))
+export const BOQTable: React.FC<BOQTableProps> = ({ data, cost }): JSX.Element => {
+  const items = Object.entries(data).map(([key, value]) => {
+    const breakdown = cost?.breakdown?.materials?.[key]
+    return {
+      item: key,
+      quantity: value,
+      unit: breakdown?.unit || '',
+      rate: breakdown?.rate || 0,
+      cost: breakdown?.cost || 0,
+    }
+  })
 
   return (
     <div className="bg-gradient-to-br from-white to-blue-50 p-6 rounded-xl shadow-lg border border-blue-100">
@@ -26,7 +33,10 @@ export const BOQTable: React.FC<BOQTableProps> = ({ data }): JSX.Element => {
           <thead>
             <tr className="border-b-2 border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50">
               <th className="text-left px-4 py-4 font-semibold text-slate-800">Material Item</th>
-              <th className="text-right px-4 py-4 font-semibold text-slate-800">Quantity</th>
+              <th className="text-center px-4 py-4 font-semibold text-slate-800">Quantity</th>
+              <th className="text-center px-4 py-4 font-semibold text-slate-800">Unit</th>
+              <th className="text-right px-4 py-4 font-semibold text-slate-800">Rate</th>
+              <th className="text-right px-4 py-4 font-semibold text-slate-800">Total Cost</th>
             </tr>
           </thead>
           <tbody>
@@ -40,8 +50,17 @@ export const BOQTable: React.FC<BOQTableProps> = ({ data }): JSX.Element => {
                 <td className="px-4 py-4 text-slate-900 font-medium capitalize">
                   {item.item.replace(/_/g, ' ')}
                 </td>
-                <td className="px-4 py-4 text-right text-slate-700 font-bold text-blue-600">
-                  {typeof item.quantity === 'number' ? item.quantity.toFixed(2) : item.quantity}
+                <td className="px-4 py-4 text-center text-slate-700 font-bold text-blue-600">
+                  {typeof item.quantity === 'number' ? Math.round(item.quantity) : item.quantity}
+                </td>
+                <td className="px-4 py-4 text-center text-slate-600">
+                  {item.unit}
+                </td>
+                <td className="px-4 py-4 text-right text-slate-600">
+                  {item.rate > 0 ? `₹${item.rate.toLocaleString('en-IN', { maximumFractionDigits: 2 })}` : '-'}
+                </td>
+                <td className="px-4 py-4 text-right font-semibold text-emerald-600">
+                  {item.cost > 0 ? `₹${item.cost.toLocaleString('en-IN', { maximumFractionDigits: 0 })}` : '-'}
                 </td>
               </tr>
             ))}

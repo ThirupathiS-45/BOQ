@@ -13,7 +13,8 @@ export const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }): JS
   const [formData, setFormData] = useState<FloorPlanRequest>({
     query: '',
     quality: 1,  // 0=budget, 1=standard, 2=premium
-    location: 'default',
+    location: 'tier2',
+    contractor_margin: true,  // Default: ON
   })
   const [error, setError] = useState<string | null>(null)
 
@@ -118,11 +119,40 @@ export const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }): JS
             className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white hover:border-blue-300 transition-colors font-medium"
             disabled={isLoading}
           >
-            <option value="default">Default Rates</option>
-            <option value="urban">Urban Area</option>
-            <option value="suburban">Suburban Area</option>
-            <option value="commercial">Commercial Zone</option>
+            <option value="tier1">Tier 1 (Major Cities)</option>
+            <option value="tier2">Tier 2 (Standard)</option>
+            <option value="tier3">Tier 3 (Smaller Cities)</option>
+            <option value="metro">Metro</option>
           </select>
+        </div>
+
+        {/* Contractor Margin Toggle */}
+        <div className="flex items-center justify-between p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div>
+            <label className="text-sm font-semibold text-slate-700 block">
+              ✓ Include Contractor Margin
+            </label>
+            <p className="text-xs text-slate-500 mt-1">Additional 12% on materials + labor + GST</p>
+          </div>
+          <button
+            type="button"
+            onClick={() =>
+              setFormData((prev) => ({
+                ...prev,
+                contractor_margin: !prev.contractor_margin,
+              }))
+            }
+            disabled={isLoading}
+            className={`relative inline-flex items-center h-8 w-14 rounded-full transition-colors ${
+              formData.contractor_margin ? 'bg-blue-500' : 'bg-slate-300'
+            }`}
+          >
+            <span
+              className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
+                formData.contractor_margin ? 'translate-x-7' : 'translate-x-1'
+              }`}
+            />
+          </button>
         </div>
 
         {/* Submit Button */}

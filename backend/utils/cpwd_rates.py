@@ -34,7 +34,7 @@ class CPWDRates:
         "switches": {"min": 80, "max": 200},
         "lights": {"min": 150, "max": 400},
         "pipes_meters": {"min": 50, "max": 90},
-        "bathroom_sets": {"min": 18000, "max": 35000},
+        "bathroom_sets": {"min": 35000, "max": 50000},  # Minimum ₹35,000
     }
     
     # Location-based multipliers (can be customized)

@@ -118,6 +118,43 @@ export const CostBreakdown: React.FC<CostBreakdownProps> = ({ cost, currency = '
           </div>
         </div>
       </div>
+
+      {/* Additional Costs Section */}
+      {cost.hidden_costs && (
+        <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+          <h4 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
+            <span className="text-amber-600">⚠️</span> Additional Costs
+          </h4>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-slate-700">GST (18% on materials)</span>
+              <span className="text-slate-900 font-semibold">
+                ₹ {formatCurrency(cost.hidden_costs.gst)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-slate-700">Contingency (10%)</span>
+              <span className="text-slate-900 font-semibold">
+                ₹ {formatCurrency(cost.hidden_costs.contingency)}
+              </span>
+            </div>
+            {cost.hidden_costs.contractor_margin > 0 && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-700">Contractor Margin (12%)</span>
+                <span className="text-slate-900 font-semibold">
+                  ₹ {formatCurrency(cost.hidden_costs.contractor_margin)}
+                </span>
+              </div>
+            )}
+            <div className="border-t border-amber-300 pt-2 mt-2 flex items-center justify-between text-sm">
+              <span className="text-slate-700 font-semibold">Subtotal</span>
+              <span className="text-slate-900 font-bold">
+                ₹ {formatCurrency(cost.hidden_costs.subtotal)}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

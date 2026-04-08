@@ -49,6 +49,7 @@ class PredictRequest(BaseModel):
     quality: Optional[int] = Field(default=1, description="0=budget, 1=standard, 2=premium")
     location: Optional[str] = Field(default="tier2", description="Location tier for cost adjustment")
     use_nlp: Optional[bool] = Field(default=True, description="Use NLP parsing if available")
+    contractor_margin: Optional[bool] = Field(default=True, description="Include contractor margin (12%)")
 
 
 class BOQItem(BaseModel):
@@ -229,8 +230,8 @@ def predict_boq(input_data: Dict[str, Any]) -> tuple[bool, Dict[str, float], Opt
         
         logger.info(f"BOQ before cleanup: {boq}")
         
-        # Ensure non-negative values and convert to Python float
-        boq = {k: float(max(0, v)) for k, v in boq.items()}
+        # Ensure non-negative values and round to whole numbers
+        boq = {k: int(round(max(0, v))) for k, v in boq.items()}
         
         # Remove labor_cost from BOQ (it's handled separately in costing)
         boq.pop("labor_cost", None)
@@ -249,15 +250,17 @@ def calculate_costs(
     area_sqft: float,
     quality: str,
     location: str,
+    contractor_margin: bool = True,
 ) -> tuple[bool, Dict[str, Any], Optional[str]]:
     """
-    Calculate costs using CPWD rates.
+    Calculate costs using CPWD rates with hidden costs.
     
     Args:
         boq: Bill of Quantities
         area_sqft: Built-up area
         quality: Quality tier
         location: Location tier
+        contractor_margin: Include contractor margin
         
     Returns:
         Tuple of (success, cost_dict, error_message)
@@ -266,6 +269,7 @@ def calculate_costs(
         calculator = CostCalculator(
             quality=quality,
             location=location,
+            contractor_margin=contractor_margin,
         )
         
         cost_data = calculator.calculate(boq, area_sqft)
@@ -348,6 +352,7 @@ async def predict(request: PredictRequest, background_tasks: BackgroundTasks):
         parsed_input.get("area_sqft", 1000),
         quality_str,
         request.location,
+        request.contractor_margin,
     )
     
     if not cost_success:

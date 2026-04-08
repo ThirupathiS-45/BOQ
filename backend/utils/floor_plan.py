@@ -64,13 +64,13 @@ def generate_floor_plan(prompt: str, timeout: int = 60) -> tuple[bool, Optional[
 
 def create_floor_plan_prompt(input_data: dict) -> str:
     """
-    Create floor plan prompt from structured input.
+    Create floor plan prompt from structured input with room dimensions.
     
     Args:
         input_data: Structured building parameters
         
     Returns:
-        Floor plan description prompt
+        Floor plan description prompt with dimensions
     """
     area = input_data.get("area_sqft", 1000)
     floors = input_data.get("floors", 1)
@@ -81,12 +81,25 @@ def create_floor_plan_prompt(input_data: dict) -> str:
     quality_map = {0: "simple", 1: "standard", 2: "luxury"}
     quality_str = quality_map.get(quality, "standard")
     
+    # Calculate approximate room dimensions
+    area_per_floor = area / floors
+    bedroom_area = (area_per_floor * 0.25) / bedrooms if bedrooms > 0 else area_per_floor * 0.25
+    bathroom_area = (area_per_floor * 0.08) / bathrooms if bathrooms > 0 else area_per_floor * 0.08
+    living_area = area_per_floor * 0.35
+    kitchen_area = area_per_floor * 0.12
+    
     prompt = (
         f"Top-down architectural floor plan for a {quality_str} "
         f"{floors}-floor residential building with {bedrooms} bedrooms, "
-        f"{bathrooms} bathrooms, approximately {area} square feet. "
+        f"{bathrooms} bathrooms, approximately {area} square feet total. "
+        f"Each floor: {area_per_floor:.0f} sqft. "
+        f"CRITICAL: Add room dimension labels inside each room showing the sqft area. "
+        f"Bedroom dimensions (each ~{bedroom_area:.0f} sqft), "
+        f"Bathroom dimensions (each ~{bathroom_area:.0f} sqft), "
+        f"Living room (~{living_area:.0f} sqft), "
+        f"Kitchen (~{kitchen_area:.0f} sqft). "
         f"Clean lines, technical drawing style, grid background, "
-        f"labeled rooms, professional blueprint aesthetic."
+        f"clearly labeled rooms with sqft dimensions inside each room, professional blueprint aesthetic."
     )
     
     return prompt

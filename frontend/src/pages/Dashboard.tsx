@@ -65,7 +65,7 @@ export const Dashboard: FC = (): JSX.Element => {
         <>
           {/* BOQ and Cost Breakdown */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <BOQTable data={floorPlan.boq} />
+            <BOQTable data={floorPlan.boq} cost={floorPlan.cost} />
             <CostBreakdown cost={floorPlan.cost} />
           </div>
 
