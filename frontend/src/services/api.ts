@@ -1,10 +1,18 @@
 import axios, { AxiosInstance, AxiosError } from 'axios'
-import type { FloorPlanRequest, FloorPlanResponse } from '@/types'
+import type { FloorPlanRequest, FloorPlanResponse, CostBreakdown, BOQItem, Metadata } from '@/types'
 
 declare global {
   interface ImportMeta {
     env: Record<string, string>
   }
+}
+
+interface PDFExportRequest {
+  project_description: string
+  floor_plan?: string
+  boq: Record<string, number | string>
+  cost: CostBreakdown
+  metadata?: Metadata
 }
 
 class APIClient {
@@ -65,6 +73,32 @@ class APIClient {
           throw new Error('Server error. Please try again later.')
         }
         throw new Error(error.response?.data?.message || error.message)
+      }
+      throw error
+    }
+  }
+
+  async downloadPDF(request: PDFExportRequest): Promise<Blob> {
+    try {
+      const response = await axios.post(
+        `${this.baseURL}/export/pdf`,
+        request,
+        {
+          timeout: 30000,
+          responseType: 'blob',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      )
+
+      return response.data
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (error.code === 'ECONNABORTED') {
+          throw new Error('PDF generation timeout. Please try again.')
+        }
+        throw new Error(error.response?.data?.message || 'Failed to generate PDF')
       }
       throw error
     }

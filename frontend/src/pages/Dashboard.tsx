@@ -5,6 +5,7 @@ import { BOQTable } from '@/components/BOQTable'
 import { CostBreakdown } from '@/components/CostBreakdown'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Alert } from '@/components/Alert'
+import { DownloadPDFButton } from '@/components/DownloadPDFButton'
 import { useGenerateFloorPlan, useFloorPlan } from '@/hooks/useFloorPlan'
 import type { FloorPlanRequest } from '@/types'
 
@@ -76,7 +77,7 @@ export const Dashboard: FC = (): JSX.Element => {
                 <span className="w-1 h-6 bg-gradient-to-b from-blue-500 to-cyan-500 rounded"></span>
                 Generation Details
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div className="bg-gradient-to-br from-blue-50 to-cyan-50 p-4 rounded-lg border border-blue-100">
                   <p className="text-xs text-slate-600 font-semibold uppercase tracking-wide">Parser Method</p>
                   <p className="text-base font-bold text-slate-900 mt-2">{floorPlan.metadata.parser || 'N/A'}</p>
@@ -89,6 +90,14 @@ export const Dashboard: FC = (): JSX.Element => {
                   <p className="text-xs text-slate-600 font-semibold uppercase tracking-wide">Location</p>
                   <p className="text-base font-bold text-slate-900 mt-2">{floorPlan.metadata.location || 'N/A'}</p>
                 </div>
+              </div>
+              
+              {/* Download PDF Button */}
+              <div className="flex justify-center pt-4 border-t border-blue-200">
+                <DownloadPDFButton 
+                  floorPlan={floorPlan}
+                  projectDescription={`Generated Building Project`}
+                />
               </div>
             </div>
           )}

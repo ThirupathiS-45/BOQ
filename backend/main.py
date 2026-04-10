@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import joblib
@@ -28,6 +28,7 @@ from backend.utils.feature_engineering import FeatureEngineer
 from backend.utils.cpwd_rates import parse_quality
 from backend.utils.cost_calculator import CostCalculator
 from backend.utils.floor_plan import generate_floor_plan, create_floor_plan_prompt
+from backend.utils.pdf_generator import PDFGenerator
 
 
 # =========================================
@@ -84,6 +85,15 @@ class HealthResponse(BaseModel):
     status: str
     model_loaded: bool
     api_key_configured: bool
+
+
+class PDFExportRequest(BaseModel):
+    """Request model for PDF export endpoint."""
+    project_description: str = Field(..., description="Project description")
+    floor_plan: Optional[str] = Field(None, description="Base64 encoded floor plan image")
+    boq: Dict[str, Any] = Field(..., description="Bill of Quantities data")
+    cost: Dict[str, Any] = Field(..., description="Cost breakdown data")
+    metadata: Optional[Dict[str, Any]] = Field(None, description="Optional metadata")
 
 
 # =========================================
@@ -474,10 +484,51 @@ async def root():
             "health": "/health",
             "predict": "/predict (POST)",
             "predict_with_input": "/predict-with-input (POST)",
+            "export_pdf": "/export/pdf (POST)",
             "docs": "/docs",
         },
         "status": "operational" if AppState.model else "model_not_loaded",
     }
+
+
+@app.post("/export/pdf")
+async def export_pdf(request: PDFExportRequest):
+    """
+    Export floor plan report as PDF.
+    
+    Args:
+        request: PDFExportRequest with project data
+        
+    Returns:
+        PDF file as binary response
+    """
+    try:
+        # Create PDF generator
+        pdf_gen = PDFGenerator()
+        
+        # Generate PDF
+        pdf_bytes = pdf_gen.generate_pdf(
+            project_description=request.project_description,
+            floor_plan_base64=request.floor_plan or "",
+            boq_data=request.boq,
+            cost_data=request.cost,
+            metadata=request.metadata,
+        )
+        
+        # Return PDF as response
+        return StreamingResponse(
+            iter([pdf_bytes]),
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": "attachment; filename=boq_report.pdf"
+            }
+        )
+    except Exception as e:
+        logger.error(f"PDF export error: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to generate PDF: {str(e)}"
+        )
 
 
 # =========================================
